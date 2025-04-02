@@ -17,6 +17,32 @@ func NovoHandler(repo *Repositorio) *Handler {
 	return &Handler{repo: repo}
 }
 
+func (h *Handler) AtualizarStatusHandler(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	var payload struct {
+		Status string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
+		return
+	}
+
+	atualizado, err := h.repo.AtualizarStatus(id, payload.Status)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, atualizado)
+}
+
 // CriarNegocio trata a criação de um novo negócio.
 func (h *Handler) CriarNegocio(c *gin.Context) {
 	var novoNegocio Negocio
@@ -96,6 +122,33 @@ func (h *Handler) AtualizarNegocio(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, negocioAtualizado)
+}
+
+// AtualizarTarefaHandler atualiza somente o campo "tarefa" de um negócio.
+func (h *Handler) AtualizarTarefaHandler(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	var payload struct {
+		Tarefa string `json:"tarefa"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
+		return
+	}
+
+	atualizado, err := h.repo.AtualizarTarefa(id, payload.Tarefa)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, atualizado)
 }
 
 // DeletarNegocio remove um negócio pelo ID.

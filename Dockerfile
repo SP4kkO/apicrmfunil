@@ -1,22 +1,29 @@
-# Etapa de build
-FROM golang:1.23-alpine AS builder
+# Stage 1: Build
+FROM golang:1.23.0-alpine AS builder
+
+# Define o diretório de trabalho
+WORKDIR /app
+
+# Copia os arquivos de dependência e baixa as dependências
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+# Copia o restante do código-fonte para dentro do container
+COPY . .
+
+# Compila a aplicação, apontando para o arquivo main correto
+RUN go build -o main ./cmd/server/main.go
+
+# Stage 2: Runtime
+FROM alpine:latest
 
 WORKDIR /app
 
-# Copia arquivos de módulo e baixa as dependências
-COPY go.mod go.sum ./
-RUN go mod download
+# Copia o binário compilado da etapa anterior
+COPY --from=builder /app/main .
 
-# Copia o restante do código-fonte
-COPY . .
-
-# Compila a aplicação
-RUN go build -o my-crm-backend ./cmd/server
-
-# Etapa final
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/my-crm-backend .
+# Exponha a porta da aplicação
 EXPOSE 8080
-CMD ["./my-crm-backend"]
+
+# Comando para executar o binário
+CMD ["./main"]

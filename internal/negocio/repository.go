@@ -48,6 +48,28 @@ func (r *Repositorio) Atualizar(id int, updated Negocio) (Negocio, error) {
 	return Negocio{}, errors.New("Negocio not found")
 }
 
+// AtualizarStatus atualiza apenas o campo "status" de um negócio pelo ID.
+func (r *Repositorio) AtualizarStatus(id int, novoStatus string) (Negocio, error) {
+	for i, n := range r.negocios {
+		if n.ID == id {
+			r.negocios[i].Status = novoStatus
+			return r.negocios[i], nil
+		}
+	}
+	return Negocio{}, errors.New("Negocio not found")
+}
+
+// AtualizarTarefa atualiza apenas o campo "tarefa" de um negócio pelo ID.
+func (r *Repositorio) AtualizarTarefa(id int, novaTarefa string) (Negocio, error) {
+	for i, n := range r.negocios {
+		if n.ID == id {
+			r.negocios[i].Tarefa = novaTarefa
+			return r.negocios[i], nil
+		}
+	}
+	return Negocio{}, errors.New("Negocio not found")
+}
+
 // Deletar remove um negócio pelo ID.
 func (r *Repositorio) Deletar(id int) error {
 	for i, n := range r.negocios {

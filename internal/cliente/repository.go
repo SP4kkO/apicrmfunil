@@ -1,71 +1,69 @@
 package cliente
 
-import "errors"
+import (
+	"errors"
 
-// Repositorio simula um armazenamento in-memory para os clientes.
+	"gorm.io/gorm"
+)
+
 type Repositorio struct {
-	clientes []Cliente
+	db *gorm.DB
 }
 
-// NovoRepositorio cria e retorna um novo repositório.
-func NovoRepositorio() *Repositorio {
-	return &Repositorio{
-		clientes: []Cliente{},
-	}
+func NovoRepositorio(db *gorm.DB) *Repositorio {
+	return &Repositorio{db: db}
 }
 
-// Adicionar insere um novo cliente, garantindo que o CNPJ seja único.
+// Adicionar insere um novo cliente no banco de dados.
 func (r *Repositorio) Adicionar(c Cliente) (Cliente, error) {
-	for _, cl := range r.clientes {
-		if cl.CNPJ == c.CNPJ {
-			return Cliente{}, errors.New("CNPJ already exists")
-		}
+	var existente Cliente
+	r.db.Where("cnpj = ?", c.CNPJ).First(&existente)
+	if existente.ID != 0 {
+		return Cliente{}, errors.New("CNPJ already exists")
 	}
-	c.ID = len(r.clientes) + 1
-	r.clientes = append(r.clientes, c)
-	return c, nil
+
+	err := r.db.Create(&c).Error
+	return c, err
 }
 
-// Listar retorna todos os clientes cadastrados.
-func (r *Repositorio) Listar() []Cliente {
-	return r.clientes
+// Listar retorna todos os clientes do banco de dados.
+func (r *Repositorio) Listar() ([]Cliente, error) {
+	var clientes []Cliente
+	err := r.db.Find(&clientes).Error
+	return clientes, err
 }
 
 // ObterPorID busca um cliente pelo ID.
 func (r *Repositorio) ObterPorID(id int) (*Cliente, error) {
-	for i, cl := range r.clientes {
-		if cl.ID == id {
-			return &r.clientes[i], nil
-		}
+	var cliente Cliente
+	err := r.db.First(&cliente, id).Error
+	if err != nil {
+		return nil, errors.New("Cliente not found")
 	}
-	return nil, errors.New("Cliente not found")
+	return &cliente, nil
 }
 
 // Atualizar altera os dados de um cliente pelo ID.
 func (r *Repositorio) Atualizar(id int, updated Cliente) (Cliente, error) {
-	for i, cl := range r.clientes {
-		if cl.ID == id {
-			// Verifica se o novo CNPJ já existe em outro cliente.
-			for _, other := range r.clientes {
-				if other.CNPJ == updated.CNPJ && other.ID != id {
-					return Cliente{}, errors.New("CNPJ already exists")
-				}
-			}
-			updated.ID = id
-			r.clientes[i] = updated
-			return updated, nil
-		}
+	var cliente Cliente
+	err := r.db.First(&cliente, id).Error
+	if err != nil {
+		return Cliente{}, errors.New("Cliente not found")
 	}
-	return Cliente{}, errors.New("Cliente not found")
+
+	// Verifica se o novo CNPJ já existe em outro cliente.
+	var existente Cliente
+	r.db.Where("cnpj = ? AND id != ?", updated.CNPJ, id).First(&existente)
+	if existente.ID != 0 {
+		return Cliente{}, errors.New("CNPJ already exists")
+	}
+
+	updated.ID = id
+	err = r.db.Model(&cliente).Updates(updated).Error
+	return updated, err
 }
 
 // Deletar remove um cliente pelo ID.
 func (r *Repositorio) Deletar(id int) error {
-	for i, cl := range r.clientes {
-		if cl.ID == id {
-			r.clientes = append(r.clientes[:i], r.clientes[i+1:]...)
-			return nil
-		}
-	}
-	return errors.New("Cliente not found")
+	return r.db.Delete(&Cliente{}, id).Error
 }

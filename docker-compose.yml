@@ -1,7 +1,41 @@
-version: "3.9"
+version: '3.3'
 
 services:
+  db:
+    image: postgres:13
+    container_name: gdriveapi-dbd
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: myapp_test_db
+    ports:
+      - "5433:5432" 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gdriveapi_network
+
   app:
     build: .
+    container_name: gdriveapi-api
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432 
+      DB_USER: myuser
+      DB_PASSWORD: mysecretpassword
+      DB_NAME: myapp_test_db
+      DB_SSLMODE: disable
     ports:
       - "8080:8080"
+    depends_on:
+      - db  # Garante que o banco de dados esteja disponível antes de iniciar a aplicação
+    networks:
+      - gdriveapi_network
+
+networks:
+  gdriveapi_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

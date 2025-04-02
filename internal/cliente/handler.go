@@ -34,7 +34,12 @@ func (h *Handler) CriarCliente(c *gin.Context) {
 
 // ListarClientes retorna todos os clientes cadastrados.
 func (h *Handler) ListarClientes(c *gin.Context) {
-	c.JSON(http.StatusOK, h.repo.Listar())
+	clientes, err := h.repo.Listar()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, clientes)
 }
 
 // ObterCliente busca um cliente pelo ID.

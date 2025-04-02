@@ -1,10 +1,25 @@
 package cliente
 
-// Cliente representa uma empresa ou cliente no sistema de CRM.
+import (
+	"time"
+
+	"my-crm-backend/internal/contato"
+	"my-crm-backend/internal/empresa"
+
+	"gorm.io/gorm"
+)
+
 type Cliente struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"id" gorm:"primaryKey;autoIncrement"`
 	Nome     string `json:"nome"`
 	CNPJ     string `json:"cnpj"`
 	Endereco string `json:"endereco"`
 	Contato  string `json:"contato"`
+
+	Empresas []empresa.Empresa `json:"empresas" gorm:"foreignKey:ClienteID"`
+	Contatos []contato.Contato `json:"contatos" gorm:"foreignKey:ClienteID"`
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
