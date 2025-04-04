@@ -12,9 +12,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"my-crm-backend/internal/anotacao" // import para o módulo de anotações
 	"my-crm-backend/internal/cliente"
 	"my-crm-backend/internal/contato"
 	"my-crm-backend/internal/empresa"
+	"my-crm-backend/internal/historicoetapa"
 	"my-crm-backend/internal/negociacao"
 	"my-crm-backend/internal/tarefa"
 )
@@ -55,7 +57,7 @@ func main() {
 		log.Fatalf("Erro ao conectar com o banco de dados: %v", err)
 	}
 
-	// Executa o AutoMigrate para as tabelas (caso utilize GORM para migrar os models)
+	// Executa o AutoMigrate para as tabelas (incluindo o model de anotação)
 	err = db.AutoMigrate(
 		&cliente.Cliente{},
 		&empresa.Empresa{},
@@ -63,6 +65,7 @@ func main() {
 		&negociacao.Negociacao{},
 		// Se houver um model GORM para Tarefa, adicione-o aqui, ex:
 		// &tarefa.Tarefa{},
+		&anotacao.Anotacao{},
 	)
 	if err != nil {
 		log.Fatalf("Erro ao migrar o banco de dados: %v", err)
@@ -98,6 +101,13 @@ func main() {
 	tarefaRepo := tarefa.NovoRepositorio()
 	tarefaHandler := tarefa.NovoHandler(tarefaRepo)
 
+	historicoRepo := historicoetapa.NovoRepositorio(db)
+	historicoHandler := historicoetapa.NovoHandler(historicoRepo)
+
+	// Injeta o DB no repositório e handler de Anotação
+	anotacaoRepo := anotacao.NovoRepositorio(db)
+	anotacaoHandler := anotacao.NovoHandler(anotacaoRepo)
+
 	// Define as rotas da API
 	api := r.Group("/api")
 	{
@@ -107,14 +117,6 @@ func main() {
 		api.GET("/clientes/:id", clienteHandler.ObterCliente)
 		api.PUT("/clientes/:id", clienteHandler.AtualizarCliente)
 		api.DELETE("/clientes/:id", clienteHandler.DeletarCliente)
-
-		// Rotas para Negociações
-		api.POST("/negociacoes", negociacaoHandler.CriarNegociacao)
-		api.GET("/negociacoes", negociacaoHandler.ListarNegociacoes)
-		api.GET("/negociacoes/:id", negociacaoHandler.ObterNegociacao)
-		api.PUT("/negociacoes/:id", negociacaoHandler.AtualizarNegociacao)
-		api.DELETE("/negociacoes/:id", negociacaoHandler.DeletarNegociacao)
-		r.PUT("/negociacoes/:id/funil", negociacaoHandler.AtualizarFunilHandler)
 
 		// Rotas para Contatos
 		api.POST("/contatos", contatoHandler.CriarContato)
@@ -129,6 +131,7 @@ func main() {
 		api.GET("/empresas/:id", empresaHandler.ObterEmpresa)
 		api.PUT("/empresas/:id", empresaHandler.AtualizarEmpresa)
 		api.DELETE("/empresas/:id", empresaHandler.DeletarEmpresa)
+		api.POST("/empresas/:id/anotacoes", empresaHandler.AdicionarAnotacao)
 
 		// Rotas para Tarefas
 		api.POST("/tarefas", tarefaHandler.CriarTarefa)
@@ -136,6 +139,25 @@ func main() {
 		api.GET("/tarefas/:id", tarefaHandler.ObterTarefa)
 		api.PUT("/tarefas/:id", tarefaHandler.AtualizarTarefa)
 		api.DELETE("/tarefas/:id", tarefaHandler.DeletarTarefa)
+
+		// Rotas para Negociações
+		negociacoes := api.Group("/negociacoes")
+		{
+			negociacoes.POST("", negociacaoHandler.CriarNegociacao)
+			negociacoes.GET("", negociacaoHandler.ListarNegociacoes)
+			negociacoes.GET("/:id", negociacaoHandler.ObterNegociacao)
+			negociacoes.PUT("/:id", negociacaoHandler.AtualizarNegociacao)
+			negociacoes.DELETE("/:id", negociacaoHandler.DeletarNegociacao)
+			negociacoes.PUT("/:id/funil", negociacaoHandler.AtualizarFunilHandler)
+			negociacoes.GET("/:id/historico-etapas", historicoHandler.ListarPorNegociacao)
+		}
+
+		// Rotas para Anotações
+		api.POST("/anotacoes", anotacaoHandler.CriarAnotacao)
+		api.GET("/anotacoes", anotacaoHandler.ListarAnotacoes)
+		api.GET("/anotacoes/:id", anotacaoHandler.ObterAnotacao)
+		api.PUT("/anotacoes/:id", anotacaoHandler.AtualizarAnotacao)
+		api.DELETE("/anotacoes/:id", anotacaoHandler.DeletarAnotacao)
 	}
 
 	// Inicia o servidor na porta 8080

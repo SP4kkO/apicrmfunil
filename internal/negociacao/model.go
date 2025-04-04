@@ -10,11 +10,11 @@ import (
 )
 
 type Negociacao struct {
-	ID        int             `json:"id" gorm:"primaryKey;autoIncrem-ent"`
+	ID        int             `json:"id" gorm:"primaryKey;autoIncrement"`
 	EmpresaID int             `json:"empresa_id"`
 	Empresa   empresa.Empresa `json:"empresa" gorm:"foreignKey:EmpresaID"`
 	ContatoID int             `json:"contato_id"`
-	Contato   contato.Contato `json:"contato" gorm:"foreignKey:ContatoID"`
+	Contato   contato.Contato `json:"contato"` // Sem tag foreignKey, apenas exibe o contato
 
 	NomeNegociacao        string    `json:"nome_negociacao"`
 	FunilVendas           string    `json:"funil_vendas"`

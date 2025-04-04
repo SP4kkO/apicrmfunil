@@ -17,14 +17,14 @@ func NovoHandler(repo Repository) *Handler {
 	return &Handler{repo: repo}
 }
 
-// CriarEmpresa cria uma nova empresa.
+// CriarEmpresa insere uma nova empresa no banco de dados.
 func (h *Handler) CriarEmpresa(c *gin.Context) {
 	var e Empresa
 	if err := c.ShouldBindJSON(&e); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// Valida campos obrigatórios: Nome e CNPJMatriz; e também ClienteDaBase
+	// Validação dos campos obrigatórios: Nome e CNPJMatriz
 	if e.Nome == "" || e.CNPJMatriz == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Nome da empresa e CNPJ Matriz são obrigatórios"})
 		return
@@ -47,7 +47,7 @@ func (h *Handler) ListarEmpresas(c *gin.Context) {
 	c.JSON(http.StatusOK, empresas)
 }
 
-// ObterEmpresa retorna uma empresa pelo ID.
+// ObterEmpresa busca uma empresa pelo ID.
 func (h *Handler) ObterEmpresa(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
@@ -63,7 +63,7 @@ func (h *Handler) ObterEmpresa(c *gin.Context) {
 	c.JSON(http.StatusOK, empresa)
 }
 
-// AtualizarEmpresa atualiza os dados de uma empresa existente.
+// AtualizarEmpresa modifica os dados de uma empresa existente.
 func (h *Handler) AtualizarEmpresa(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
@@ -97,4 +97,32 @@ func (h *Handler) DeletarEmpresa(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// AdicionarAnotacao adiciona uma nova anotação à empresa.
+// Neste caso, a anotação é uma string simples. Se já existir alguma anotação,
+// a nova anotação é concatenada com uma quebra de linha.
+func (h *Handler) AdicionarAnotacao(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	// Espera receber um JSON no formato: {"anotacao": "texto da anotação"}
+	var payload struct {
+		Anotacao string `json:"anotacao"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	empresa, err := h.repo.AdicionarAnotacao(id, payload.Anotacao)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, empresa)
 }

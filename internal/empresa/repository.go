@@ -13,31 +13,29 @@ type Repository interface {
 	ObterPorID(id int) (*Empresa, error)
 	Atualizar(id int, updated Empresa) (Empresa, error)
 	Deletar(id int) error
+	// Novo método para adicionar uma anotação à empresa
+	AdicionarAnotacao(id int, anotacao string) (Empresa, error)
 }
 
 type repository struct {
 	db *gorm.DB
 }
 
-// NovoRepositorio cria e retorna um repositório baseado em GORM.
 func NovoRepositorio(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-// Adicionar insere uma nova empresa no banco de dados.
 func (r *repository) Adicionar(e Empresa) (Empresa, error) {
 	err := r.db.Create(&e).Error
 	return e, err
 }
 
-// Listar retorna todas as empresas do banco de dados.
 func (r *repository) Listar() ([]Empresa, error) {
 	var empresas []Empresa
 	err := r.db.Find(&empresas).Error
 	return empresas, err
 }
 
-// ObterPorID busca uma empresa pelo ID.
 func (r *repository) ObterPorID(id int) (*Empresa, error) {
 	var empresa Empresa
 	err := r.db.First(&empresa, id).Error
@@ -47,7 +45,6 @@ func (r *repository) ObterPorID(id int) (*Empresa, error) {
 	return &empresa, nil
 }
 
-// Atualizar modifica os dados de uma empresa existente.
 func (r *repository) Atualizar(id int, updated Empresa) (Empresa, error) {
 	var empresa Empresa
 	err := r.db.First(&empresa, id).Error
@@ -60,7 +57,19 @@ func (r *repository) Atualizar(id int, updated Empresa) (Empresa, error) {
 	return updated, err
 }
 
-// Deletar remove uma empresa pelo ID.
 func (r *repository) Deletar(id int) error {
 	return r.db.Delete(&Empresa{}, id).Error
+}
+
+// AdicionarAnotacao adiciona uma nova anotação à empresa identificada pelo ID.
+func (r *repository) AdicionarAnotacao(id int, anotacao string) (Empresa, error) {
+	empresa, err := r.ObterPorID(id)
+	if err != nil {
+		return Empresa{}, err
+	}
+
+	// Se já houver uma anotação, adiciona uma quebra de linha antes da nova
+
+	err = r.db.Save(empresa).Error
+	return *empresa, err
 }

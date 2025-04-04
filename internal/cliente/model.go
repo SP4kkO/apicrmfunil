@@ -3,7 +3,6 @@ package cliente
 import (
 	"time"
 
-	"my-crm-backend/internal/contato"
 	"my-crm-backend/internal/empresa"
 
 	"gorm.io/gorm"
@@ -17,7 +16,6 @@ type Cliente struct {
 	Contato  string `json:"contato"`
 
 	Empresas []empresa.Empresa `json:"empresas" gorm:"foreignKey:ClienteID"`
-	Contatos []contato.Contato `json:"contatos" gorm:"foreignKey:ClienteID"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
