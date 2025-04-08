@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"my-crm-backend/internal/tarefa"
+
 	"github.com/gin-gonic/gin"
 )
 
-// Handler define os manipuladores para as negociações.
 type Handler struct {
 	repo Repository
 }
@@ -91,26 +92,24 @@ func (h *Handler) DeletarNegociacao(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// AtualizarTarefaHandler atualiza somente o campo "tarefa" de uma negociação.
-func (h *Handler) AtualizarTarefaHandler(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+// AdicionarTarefaHandler adiciona uma nova tarefa a uma negociação.
+func (h *Handler) AdicionarTarefaHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id")) // ID da Negociação
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
-	var payload struct {
-		Tarefa string `json:"tarefa"`
-	}
-	if err := c.ShouldBindJSON(&payload); err != nil {
+	var novaTarefa tarefa.Tarefa
+	if err := c.ShouldBindJSON(&novaTarefa); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
 	}
-	atualizado, err := h.repo.AtualizarTarefa(id, payload.Tarefa)
+	negociacaoAtualizada, err := h.repo.AdicionarTarefa(id, novaTarefa)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, atualizado)
+	c.JSON(http.StatusOK, negociacaoAtualizada)
 }
 
 // AtualizarFunilHandler atualiza a etapa do funil de vendas de uma negociação.

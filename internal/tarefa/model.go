@@ -28,3 +28,8 @@ type Tarefa struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
+
+// TableName retorna o nome da tabela que o GORM deverá usar.
+func (Tarefa) TableName() string {
+	return "tarefas"
+}

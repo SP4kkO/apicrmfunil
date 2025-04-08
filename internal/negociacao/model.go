@@ -5,6 +5,7 @@ import (
 
 	"my-crm-backend/internal/contato"
 	"my-crm-backend/internal/empresa"
+	"my-crm-backend/internal/tarefa"
 
 	"gorm.io/gorm"
 )
@@ -14,18 +15,18 @@ type Negociacao struct {
 	EmpresaID int             `json:"empresa_id"`
 	Empresa   empresa.Empresa `json:"empresa" gorm:"foreignKey:EmpresaID"`
 	ContatoID int             `json:"contato_id"`
-	Contato   contato.Contato `json:"contato"` // Sem tag foreignKey, apenas exibe o contato
+	Contato   contato.Contato `json:"contato"` // para exibição
 
-	NomeNegociacao        string    `json:"nome_negociacao"`
-	FunilVendas           string    `json:"funil_vendas"`
-	EtapaFunilVendas      string    `json:"etapa_funil_vendas"`
-	Fonte                 string    `json:"fonte"`
-	Campanha              string    `json:"campanha"`
-	SeguradoraAtual       string    `json:"seguradora_atual"`
-	DataVencimentoApolice time.Time `json:"data_vencimento_apolice"`
-	Tarefa                string    `json:"tarefa"`
+	NomeNegociacao        string          `json:"nome_negociacao"`
+	FunilVendas           string          `json:"funil_vendas"`
+	EtapaFunilVendas      string          `json:"etapa_funil_vendas"`
+	Fonte                 string          `json:"fonte"`
+	Campanha              string          `json:"campanha"`
+	SeguradoraAtual       string          `json:"seguradora_atual"`
+	DataVencimentoApolice time.Time       `json:"data_vencimento_apolice"`
+	Tarefas               []tarefa.Tarefa `json:"tarefas" gorm:"foreignKey:NegociacaoID"` // Associação 1:N
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }

@@ -63,10 +63,10 @@ func main() {
 		&empresa.Empresa{},
 		&contato.Contato{},
 		&negociacao.Negociacao{},
-		// Se houver um model GORM para Tarefa, adicione-o aqui, ex:
-		// &tarefa.Tarefa{},
+		&tarefa.Tarefa{}, // Inclua a migração do model Tarefa
 		&anotacao.Anotacao{},
 	)
+
 	if err != nil {
 		log.Fatalf("Erro ao migrar o banco de dados: %v", err)
 	}
@@ -98,7 +98,8 @@ func main() {
 	negociacaoHandler := negociacao.NovoHandler(negociacaoRepo)
 
 	// Para Tarefa, utilizamos um repositório in-memory (conforme seu código)
-	tarefaRepo := tarefa.NovoRepositorio()
+	tarefaRepo := tarefa.NovoRepositorio(db)
+
 	tarefaHandler := tarefa.NovoHandler(tarefaRepo)
 
 	historicoRepo := historicoetapa.NovoRepositorio(db)

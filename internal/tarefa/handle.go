@@ -39,7 +39,12 @@ func (h *Handler) CriarTarefa(c *gin.Context) {
 
 // ListarTarefas retorna todas as tarefas.
 func (h *Handler) ListarTarefas(c *gin.Context) {
-	c.JSON(http.StatusOK, h.repo.Listar())
+	tarefas, err := h.repo.Listar()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, tarefas)
 }
 
 // ObterTarefa retorna uma tarefa pelo ID.
@@ -71,7 +76,6 @@ func (h *Handler) AtualizarTarefa(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// (Opcional) Você pode incluir validação de campos obrigatórios aqui
 	tarefaAtualizada, err := h.repo.Atualizar(id, updated)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
