@@ -3,6 +3,8 @@ package empresa
 import (
 	"time"
 
+	"my-crm-backend/internal/anotacao"
+
 	"gorm.io/gorm"
 )
 
@@ -25,7 +27,10 @@ type Empresa struct {
 	LinkedinEmpresa  string `json:"linkedin_empresa,omitempty"`
 	Grupo            string `json:"grupo,omitempty"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	// Associação com Anotações (não gera ciclo, pois anotacao não importa empresa)
+	Anotacoes []anotacao.Anotacao `json:"anotacoes,omitempty" gorm:"foreignKey:EmpresaID"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }

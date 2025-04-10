@@ -12,7 +12,7 @@ type Handler struct {
 	repo Repository
 }
 
-// NovoHandler cria um novo handler para Empresa.
+// NovoHandler cria e retorna um novo handler para Empresa.
 func NovoHandler(repo Repository) *Handler {
 	return &Handler{repo: repo}
 }
@@ -24,11 +24,13 @@ func (h *Handler) CriarEmpresa(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// Validação dos campos obrigatórios: Nome e CNPJMatriz
+
+	// Validação dos campos obrigatórios: Nome e CNPJMatriz.
 	if e.Nome == "" || e.CNPJMatriz == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Nome da empresa e CNPJ Matriz são obrigatórios"})
 		return
 	}
+
 	novaEmpresa, err := h.repo.Adicionar(e)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -37,7 +39,7 @@ func (h *Handler) CriarEmpresa(c *gin.Context) {
 	c.JSON(http.StatusCreated, novaEmpresa)
 }
 
-// ListarEmpresas retorna todas as empresas.
+// ListarEmpresas retorna todas as empresas cadastradas.
 func (h *Handler) ListarEmpresas(c *gin.Context) {
 	empresas, err := h.repo.Listar()
 	if err != nil {
@@ -55,6 +57,7 @@ func (h *Handler) ObterEmpresa(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
+
 	empresa, err := h.repo.ObterPorID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -71,11 +74,13 @@ func (h *Handler) AtualizarEmpresa(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
+
 	var updated Empresa
 	if err := c.ShouldBindJSON(&updated); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	empresaAtualizada, err := h.repo.Atualizar(id, updated)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -92,6 +97,7 @@ func (h *Handler) DeletarEmpresa(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
+
 	if err := h.repo.Deletar(id); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -100,8 +106,8 @@ func (h *Handler) DeletarEmpresa(c *gin.Context) {
 }
 
 // AdicionarAnotacao adiciona uma nova anotação à empresa.
-// Neste caso, a anotação é uma string simples. Se já existir alguma anotação,
-// a nova anotação é concatenada com uma quebra de linha.
+// Espera receber um JSON no formato: {"anotacao": "texto da anotação"}.
+// Caso necessário, é possível adaptar para receber também o campo "assunto".
 func (h *Handler) AdicionarAnotacao(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
@@ -110,9 +116,10 @@ func (h *Handler) AdicionarAnotacao(c *gin.Context) {
 		return
 	}
 
-	// Espera receber um JSON no formato: {"anotacao": "texto da anotação"}
 	var payload struct {
 		Anotacao string `json:"anotacao"`
+		// Se desejar que o "assunto" seja passado pela requisição, adicione:
+		// Assunto string `json:"assunto"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

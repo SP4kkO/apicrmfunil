@@ -12,17 +12,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"my-crm-backend/internal/anotacao" // import para o módulo de anotações
+	"my-crm-backend/internal/anotacao" // Módulo de anotações
 	"my-crm-backend/internal/cliente"
 	"my-crm-backend/internal/contato"
 	"my-crm-backend/internal/empresa"
-	"my-crm-backend/internal/historicoetapa"
+	"my-crm-backend/internal/historicoetapa" // Módulo de histórico de etapas
 	"my-crm-backend/internal/negociacao"
 	"my-crm-backend/internal/tarefa"
 )
 
 func main() {
-	// Lê as variáveis de ambiente com os nomes definidos no docker-compose
+	// Lê as variáveis de ambiente definidas no docker-compose
 	host := os.Getenv("DB_HOST")
 	user := os.Getenv("DB_USER")
 	dbname := os.Getenv("DB_NAME")
@@ -57,16 +57,16 @@ func main() {
 		log.Fatalf("Erro ao conectar com o banco de dados: %v", err)
 	}
 
-	// Executa o AutoMigrate para as tabelas (incluindo o model de anotação)
+	// Executa o AutoMigrate para as tabelas, incluindo o model de histórico de etapas
 	err = db.AutoMigrate(
 		&cliente.Cliente{},
 		&empresa.Empresa{},
 		&contato.Contato{},
 		&negociacao.Negociacao{},
-		&tarefa.Tarefa{}, // Inclua a migração do model Tarefa
+		&tarefa.Tarefa{},
 		&anotacao.Anotacao{},
+		&historicoetapa.HistoricoEtapa{},
 	)
-
 	if err != nil {
 		log.Fatalf("Erro ao migrar o banco de dados: %v", err)
 	}
@@ -97,15 +97,15 @@ func main() {
 	negociacaoRepo := negociacao.NovoRepositorio(db)
 	negociacaoHandler := negociacao.NovoHandler(negociacaoRepo)
 
-	// Para Tarefa, utilizamos um repositório in-memory (conforme seu código)
+	// Repositório e handler para Tarefa (utilizando o DB)
 	tarefaRepo := tarefa.NovoRepositorio(db)
-
 	tarefaHandler := tarefa.NovoHandler(tarefaRepo)
 
+	// Repositório e handler para Histórico de Etapas
 	historicoRepo := historicoetapa.NovoRepositorio(db)
 	historicoHandler := historicoetapa.NovoHandler(historicoRepo)
 
-	// Injeta o DB no repositório e handler de Anotação
+	// Repositório e handler para Anotação
 	anotacaoRepo := anotacao.NovoRepositorio(db)
 	anotacaoHandler := anotacao.NovoHandler(anotacaoRepo)
 
@@ -149,8 +149,26 @@ func main() {
 			negociacoes.GET("/:id", negociacaoHandler.ObterNegociacao)
 			negociacoes.PUT("/:id", negociacaoHandler.AtualizarNegociacao)
 			negociacoes.DELETE("/:id", negociacaoHandler.DeletarNegociacao)
+			// Atualiza o funil e registra o histórico de alteração
 			negociacoes.PUT("/:id/funil", negociacaoHandler.AtualizarFunilHandler)
+			// Atualiza apenas o status da negociação
+			negociacoes.PUT("/:id/status", negociacaoHandler.AtualizarStatusHandler)
+			// Atualiza valor e previsão de fechamento
+			negociacoes.PUT("/:id/valores", negociacaoHandler.AtualizarValoresHandler)
+			// Rota para listar o histórico de etapas da negociação
 			negociacoes.GET("/:id/historico-etapas", historicoHandler.ListarPorNegociacao)
+		}
+
+		historico := api.Group("/historico")
+		{
+			// Exemplo de rota: GET /api/historico/historico/:negociacaoId
+			historico.GET("/historico/:negociacaoId", historicoHandler.ListarPorNegociacao)
+
+			// Outras rotas possíveis para o histórico:
+			historico.POST("", historicoHandler.Criar)
+			historico.GET("/:id", historicoHandler.Obter)
+			historico.PUT("/:id", historicoHandler.Atualizar)
+			historico.DELETE("/:id", historicoHandler.Deletar)
 		}
 
 		// Rotas para Anotações
