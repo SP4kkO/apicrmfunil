@@ -180,5 +180,5 @@ func main() {
 	}
 
 	// Inicia o servidor na porta 8080
-	r.Run(":8080")
+	r.Run(":8081")
 }
