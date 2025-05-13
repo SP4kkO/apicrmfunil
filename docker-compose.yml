@@ -26,7 +26,7 @@ services:
       DB_NAME: myapp_test_db
       DB_SSLMODE: disable
     ports:
-      - "8081:8081"
+      - "8082:8082"
     depends_on:
       - db  # Garante que o banco de dados esteja disponível antes de iniciar a aplicação
     networks:
